@@ -1,0 +1,49 @@
+#!/bin/bash
+
+setvar () {
+        while [[ $# -gt 0 ]]
+        do
+                export $1
+                shift
+        done
+}
+
+export CC=cc
+export CXX=CC
+export FC=ftn
+export F90=ftn
+export MPILD=$CXX
+export MPICC=$CC
+export MPI_HOME=$CRAY_MPICH_PREFIX
+MAKEIT=
+
+ngpu=4
+topx=4
+topy=2
+
+setvar $@
+
+nprcs=$(( topx*topy ))
+snn=$(( nprcs/ngpu ))
+
+cd src
+if [[ -n $MAKEIT ]]; then
+	make clean
+	make 
+fi
+
+cd ../rslt
+
+echo NORMAL $topx $topy $snn $nprcs
+echo "srun -N $snn --ntasks-per-node=4 ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy"
+srun -N $snn --ntasks-per-node=4 ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy
+
+if [[ -f core ]]; then mv core core_normal; echo CORE_NORMAL; fi
+
+echo AWARE
+echo "srun -N $snn --ntasks-per-node=4 ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy"
+srun -N $snn --ntasks-per-node=4 ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy
+
+if [[ -f core ]]; then mv core core_aware; echo CORE_AWARE; fi
+
+cd ..

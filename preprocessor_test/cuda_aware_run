@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source /usr/projects/hpcsoft/utilities/lib/build_utils.sh
+compi=${LCOMPILER}_${LMPI}
+mkdir bin
+cuaware_exec="bin/mcuda_aware_${compi}"
+mpi_cxx=$(get_mpi_compiler_cmd $LMPI $LCOMPILER cxx)
+
+incl=$(find -L $MPI_ROOT -type d -name include | head -1)
+echo "$mpi_cxx mpi_cuda_aware.cpp -o $cuaware_exec -I${incl}"
+$mpi_cxx mpi_cuda_aware.cpp -o $cuaware_exec -I${MPI_ROOT}/include
+
+echo $compi
+srun -n 2 $cuaware_exec

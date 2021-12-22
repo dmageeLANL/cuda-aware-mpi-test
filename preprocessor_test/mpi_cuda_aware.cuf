@@ -1,0 +1,90 @@
+! /*
+!  * COMPILE LINE:
+!  * mpifort mpi_cuda_aware.cuf -o mcuda_aware 
+!  */
+
+        program mpi_cuda_aware
+
+            use mpi
+            
+            use mpi_ext
+
+          !   include "mpif.h"
+
+            if (OMPI_MAJOR_VERSION > 0)then
+               ! include "mpif-ext.h"
+               write(0,*) "OPENMPI"
+            endif
+
+            write(0,*) "COMPILE TIME check MPI VERSION: ", MPI_VERSION, 
+     &                  MPI_SUBVERSION
+#if defined(MPIX_CUDA_AWARE_SUPPORT) && MPIX_CUDA_AWARE_SUPPORT
+            write(0,*) "This MPI library has CUDA-aware support ", 
+     &                  MPIX_CUDA_AWARE_SUPPORT
+#elif defined(MPIX_CUDA_AWARE_SUPPORT) && !MPIX_CUDA_AWARE_SUPPORT
+            write(0,*) "This MPI library does not have CUDA-aware support "
+#else
+            write(0,*) "This MPI library cannot determine if ",
+     &                  "there is CUDA-aware support."
+#endif /* MPIX_CUDA_AWARE_SUPPORT */
+            write(0,*)  "---------------"
+            
+            write(0,*)  "RUN TIME check:"
+
+            if (MPIX_Query_cuda_support() == 1) then
+               write(0,*) "This MPI library has CUDA-aware support."
+            else
+               write(0,*) "This MPI library does not have CUDA-aware ",
+     &              "support."
+            endif
+
+        end program
+
+! #if defined(MPIX_CUDA_AWARE_SUPPORT)
+!     if (1 == MPIX_Query_cuda_support()) {
+!         printf("This MPI library has CUDA-aware support.\n");
+!     } else {
+!         printf("This MPI library does not have CUDA-aware support.\n");
+!     }
+! #else /* !defined(MPIX_CUDA_AWARE_SUPPORT) */
+!     printf("This MPI library cannot determine if there is CUDA-aware support.\n");
+! #endif /* MPIX_CUDA_AWARE_SUPPORT */
+ 
+!     return 0;
+! /*
+
+!  * Requires Open MPI v2.0.0 or later.
+!  * Program that shows the use of CUDA-aware macro and runtime check.
+!  */
+
+! #include <stdio.h>
+! #include "mpi.h"
+
+! #ifdef OMPI_RELEASE_VERSION
+! #include "mpi-ext.h" /* Needed for OPENMPI */
+! #endif
+
+! int main(int argc, char *argv[])
+! {
+!     printf("Compile time check\nMPI VERSION: %d.%d:\n", MPI_VERSION, MPI_SUBVERSION);
+! #if defined(MPIX_CUDA_AWARE_SUPPORT) && MPIX_CUDA_AWARE_SUPPORT
+!     printf("This MPI library has CUDA-aware support.\n", MPIX_CUDA_AWARE_SUPPORT);
+! #elif defined(MPIX_CUDA_AWARE_SUPPORT) && !MPIX_CUDA_AWARE_SUPPORT
+!     printf("This MPI library does not have CUDA-aware support.\n");
+! #else
+!     printf("This MPI library cannot determine if there is CUDA-aware support.\n");
+! #endif /* MPIX_CUDA_AWARE_SUPPORT */
+ 
+!     printf("Run time check:\n");
+! #if defined(MPIX_CUDA_AWARE_SUPPORT)
+!     if (1 == MPIX_Query_cuda_support()) {
+!         printf("This MPI library has CUDA-aware support.\n");
+!     } else {
+!         printf("This MPI library does not have CUDA-aware support.\n");
+!     }
+! #else /* !defined(MPIX_CUDA_AWARE_SUPPORT) */
+!     printf("This MPI library cannot determine if there is CUDA-aware support.\n");
+! #endif /* MPIX_CUDA_AWARE_SUPPORT */
+ 
+!     return 0;
+! }
