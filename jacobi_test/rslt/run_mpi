@@ -5,15 +5,4 @@ mpirank=${PMIX_RANK:-$SLURM_PROCID}
 nr=$(( $noderank+1 ))
 export CUDA_VISIBLE_DEVICES=$noderank
 
-if [[ $1 == "dbg" ]]; then
-	shift
-	echo "DEBUG"
-	echo "cuda-gdb --args $@"
-	if [[ $mpirank == 0 ]]; then	
-		cuda-gdb --args $@
-	else
-		$@
-	fi
-else
-	$@
-fi
+$@
