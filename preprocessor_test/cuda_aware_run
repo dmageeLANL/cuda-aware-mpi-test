@@ -1,14 +1,32 @@
 #!/bin/bash
 
-source /usr/projects/hpcsoft/utilities/lib/build_utils.sh
-compi=${LCOMPILER}_${LMPI}
+prefixer() {
+    ppath=""
+    if which $1 &> /dev/null; then
+        ppath="$(dirname $(dirname $(which $1)))"
+    fi
+}
+
+mpif=$MPI_HOME
+if [ -z $mpif ]; then mpif=${CRAY_MPICH_PREFIX}; fi
+if [ -z $mpif ]; then mpif=$(prefixer mpicc); fi
+
+crayos=$(cat /etc/*release | grep SLES)
+
+if [[ -n $crayos ]] ; then
+    MPICXX=CC
+    compi="${PE_ENV}_cray"
+else
+    source /usr/projects/hpcsoft/utilities/lib/build_utils.sh
+    MPICXX=$(get_mpi_compiler_cmd $LMPI $LCOMPILER cxx)
+    compi="${LCOMPILER}_${LMPI}"
+fi
+
 mkdir bin
 cuaware_exec="bin/mcuda_aware_${compi}"
-mpi_cxx=$(get_mpi_compiler_cmd $LMPI $LCOMPILER cxx)
 
-incl=$(find -L $MPI_ROOT -type d -name include | head -1)
-echo "$mpi_cxx mpi_cuda_aware.cpp -o $cuaware_exec -I${incl}"
-$mpi_cxx mpi_cuda_aware.cpp -o $cuaware_exec -I${MPI_ROOT}/include
+echo "$MPICXX mpi_cuda_aware.cpp -o $cuaware_exec -I${MPI_ROOT}/include"
+$MPICXX mpi_cuda_aware.cpp -o $cuaware_exec -I${MPI_ROOT}/include
 
 echo $compi
-srun -n 2 $cuaware_exec
+srun -N 1 -n 2 $cuaware_exec
