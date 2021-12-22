@@ -24,30 +24,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Compilers
-MPICC	?=cc
-MPILD	?=CC
-NVCC	?=nvcc
+######################################################################
+## ARGUMENTS THAT CAN BE OVERRIDDEN AT COMMAND LINE
+######################################################################
 
+# Compilers 
+MPICC		?=cc
+MPILD		?=CC
+NVCC		?=nvcc
+CCBIN   	?=$(MPICC)
+
+SMS     	?=80
 CUDA_HOME 	?= $(CUDA_PATH)
 OFLAG     	?= -O3
 GDR_FLAGS	?= -lgdrapi #-L/usr/lib64
-#GDR_FLAGS	?= -L/opt/cray/pe/cray-ucx/2.7.0-1/ucx/lib/ucx -lgdrapi -luct_cuda_gdrcopy
+MPI_GTL     ?= -L$(MPI_HOME)/../../../gtl/lib -lmpi_gtl_cuda
+
+######################################################################
+## ARGUMENTS TO COMPILATION RULES
+######################################################################
+
+NVCC+= -ccbin $(CCBIN)
 
 # Flags
-CFLAGS 			 =-std=c99 $(OFLAG) -march=native -w 
-
-MPI_GTL         ?= -L$(MPI_HOME)/../../../gtl/lib -lmpi_gtl_cuda
+CFLAGS 			 = -std=c99 $(OFLAG) -march=native -w
 MPICFLAGS        = -I$(MPI_HOME)/include $(MPI_GTL) $(GDR_FLAGS)
+GENCODE_FLAGS    = -gencode arch=compute_$(SMS),code=sm_$(SMS)
 
 CUDACFLAGS		 = -I$(CUDA_HOME)/include
-
-SMS				?=80
-GENCODE_SM      := -gencode arch=compute_$(SMS),code=sm_$(SMS)
-GENCODE_FLAGS   := $(GENCODE_SM)
-
-NVCCFLAGS=-ccbin $(MPICC) $(OFLAG) $(GENCODE_FLAGS) -Xcompiler -march=native -allow-unsupported-compiler
-
+NVCCFLAGS= $(OFLAG) $(GENCODE_FLAGS) -Xcompiler -march=native -allow-unsupported-compiler
 CUDALDFLAGS=$(MPI_GTL) -L$(CUDA_HOME)/lib64 -lcudart $(OFLAG)
 
 # Description of binaries

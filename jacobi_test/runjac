@@ -8,13 +8,24 @@ setvar () {
         done
 }
 
+prefixer() {
+    ppath=""
+    if which $1 &> /dev/null; then
+        ppath="$(dirname $(dirname $(which $1)))"
+    fi
+}
+
+mpif=$MPI_HOME
+if [ -z $mpif ]; then mpif=${CRAY_MPICH_PREFIX}; fi
+if [ -z $mpif ]; then mpif=$(prefixer mpicc); fi
+
 export CC=cc
 export CXX=CC
 export FC=ftn
 export F90=ftn
 export MPILD=$CXX
 export MPICC=$CC
-export MPI_HOME=$CRAY_MPICH_PREFIX
+export MPI_HOME=$mpif
 MAKEIT=
 
 ngpu=4
