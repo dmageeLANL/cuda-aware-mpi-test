@@ -164,7 +164,6 @@ void Finalize(real * devBlocks[2], real * devSideEdges[2], real * devHaloLines[2
  */
 int ApplyTopology(int * rank, int size, const int2 * topSize, int * neighbors, int2 * topIndex, MPI_Comm * cartComm)
 {
-	int len;
 	int topologySize = topSize->x * topSize->y;
 	int dimSize[2] = {topSize->x, topSize->y};
 	int usePeriods[2] = {0, 0}, newCoords[2];
@@ -182,37 +181,24 @@ int ApplyTopology(int * rank, int size, const int2 * topSize, int * neighbors, i
 	// Create a carthesian communicator
 	MPI_Cart_create(MPI_COMM_WORLD, 2, dimSize, usePeriods, 0, cartComm);
 
-//	printf("POST CREATE: Rank %d :: CART_COMM: %d :: HOST: %s\n", *rank, *cartComm, name);
-//	fflush(stdout);
-
-//	MPI_Barrier(MPI_COMM_WORLD);
 	// Update the rank to be relevant to the new communicator
 	MPI_Comm_rank(* cartComm, rank);
-//	printf("Cartesian coord rank change: from %d to %d :: HOST: %s\n", oldRank, * rank, name);
-//	fflush(stdout);
-//	MPI_Barrier(MPI_COMM_WORLD);
+
+	if ((* rank) != oldRank)
+	{
+		printf("Rank change: from %d to %d\n", oldRank, * rank);
+	}
 
 	// Obtain the 2D coordinates in the new communicator
 	MPI_Cart_coords(* cartComm, * rank, 2, newCoords);
-		* topIndex = make_int2(newCoords[0], newCoords[1]);
-//	MPI_Barrier(MPI_COMM_WORLD);
+	* topIndex = make_int2(newCoords[0], newCoords[1]);
 
 	// Obtain the direct neighbor ranks
 	MPI_Cart_shift(* cartComm, 0, 1, neighbors + DIR_LEFT, neighbors + DIR_RIGHT);
-//	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Cart_shift(* cartComm, 1, 1, neighbors + DIR_TOP, neighbors + DIR_BOTTOM);
-//	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Setting the device here will have effect only for the normal CUDA & MPI version
 	SetDeviceAfterInit(* rank);
-//	MPI_Get_processor_name(name, &len);
-
-//	for (int i=0; i<size; i++){
-//		sleep(1);
-//		if ( *rank == i ) printf("POST:: RANK %d HOST %s\n", *rank, name);
-//		MPI_Barrier(MPI_COMM_WORLD);
-//		fflush(stdout);
-//	}
 
 	return STATUS_OK;
 }
@@ -477,9 +463,7 @@ void RunJacobi(MPI_Comm cartComm, int rank, int size, const int2 * domSize, cons
 	
 	* iterations = 0;
 	* avgTransferTime = 0.0;
-//    printf("Rank - %d :: cartComm - %d\n", rank, cartComm);
-//    printf("Rank - %d :: neighbors: %d, %d, %d, %d\n", rank, neighbors[0], neighbors[1], neighbors[2], neighbors[3]);
-    fflush(stdout);
+
 
 	while ((* iterations < JACOBI_MAX_LOOPS) && (globalResidue > JACOBI_TOLERANCE))
 	{
@@ -501,7 +485,7 @@ void RunJacobi(MPI_Comm cartComm, int rank, int size, const int2 * domSize, cons
 
 		// Obtain and distribute the global maximum residue
 		globalResidue = (real)0.0;
-		MPI_Allreduce(&residue, &globalResidue, 1, MPI_CUSTOM_REAL, MPI_MAX, cartComm); // MPI_COMM_WORLD);
+		MPI_Allreduce(&residue, &globalResidue, 1, MPI_CUSTOM_REAL, MPI_MAX, cartComm);
 
 		OnePrintf((rank == MPI_MASTER_RANK) && ((* iterations) % 100 == 0),
 			"Iteration: %d - Residue: %.6f\n", * iterations, globalResidue);
@@ -510,7 +494,7 @@ void RunJacobi(MPI_Comm cartComm, int rank, int size, const int2 * domSize, cons
 	}
 
 	// Calculate the total time spent on transfers
-	MPI_Reduce(&localTime, avgTransferTime, 1, MPI_DOUBLE, MPI_SUM, MPI_MASTER_RANK, MPI_COMM_WORLD);
+	MPI_Reduce(&localTime, avgTransferTime, 1, MPI_DOUBLE, MPI_SUM, MPI_MASTER_RANK, cartComm);
 	* avgTransferTime /= size;
 
 	OnePrintf(rank == MPI_MASTER_RANK, "Stopped after %d iterations with residue %.6f\n", * iterations, globalResidue);
