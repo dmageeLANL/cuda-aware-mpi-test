@@ -45,7 +45,6 @@ setvar $@
 ###############################################################
 ## GET SRUN OPTIONS
 ###############################################################
---exclude=nid001897,nid001765
 nprcs=$(( topx*topy ))
 snn=$(( nprcs/ngpu ))
 
@@ -64,7 +63,7 @@ srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda
 if [[ -f core ]]; then mv core core_normal; echo CORE_NORMAL; fi
 
 echo AWARE
-echo "srun -N $snn --ntasks-per-node=4${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy"
+echo "srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy"
 srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy
 
 if [[ -f core ]]; then mv core core_aware; echo CORE_AWARE; fi
