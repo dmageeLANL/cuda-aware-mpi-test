@@ -148,6 +148,16 @@ void Finalize(real * devBlocks[2], real * devSideEdges[2], real * devHaloLines[2
 	}	
 }
 
+void print_drv() {
+	int driverVersion = 0, runtimeVersion = 0;
+	cudaDriverGetVersion(&driverVersion);
+	cudaRuntimeGetVersion(&runtimeVersion);
+	printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
+		driverVersion / 1000, (driverVersion % 100) / 10,
+		runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+	fflush(stdout); 
+}
+
 // ====================
 // Topology application
 // ====================
@@ -199,6 +209,9 @@ int ApplyTopology(int * rank, int size, const int2 * topSize, int * neighbors, i
 
 	// Setting the device here will have effect only for the normal CUDA & MPI version
 	SetDeviceAfterInit(* rank);
+
+	// Print driver/runtime info for head process
+	if ((* rank) == 0) print_drv();
 
 	return STATUS_OK;
 }
