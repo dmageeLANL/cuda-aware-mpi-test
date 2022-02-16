@@ -37,23 +37,33 @@ CCBIN   	?=$(MPICC)
 SMS     	?=80
 CUDA_HOME 	?= $(CUDA_PATH)
 OFLAG     	?= -O3
-GDR_FLAGS	?= -lgdrapi #-L/usr/lib64
-MPI_GTL     ?= -L$(MPI_HOME)/../../../gtl/lib -lmpi_gtl_cuda
+GDR_FLAGS	?= -lgdrapi 
+MPI_GTL     ?= $(CRAY_MPICH_BASEDIR)/../gtl/lib
+CUDA_COMPAT ?= $(CUDA_HOME)/compat
 
 ######################################################################
 ## ARGUMENTS TO COMPILATION RULES
 ######################################################################
 
-NVCC+= -ccbin $(CCBIN)
+NVCC        += -ccbin $(CCBIN)
+ifneq ("$(wildcard $(MPI_GTL))","")
+  MPI_GTL_FLAGS    = -L$(MPI_GTL) -lmpi_gtl_cuda
+endif
+
+ifneq ("$(wildcard $(CUDA_COMPAT))","")
+  CUDA_DRV_FLAGS   = -L$(CUDA_COMPAT) -lcuda
+endif
 
 # Flags
 CFLAGS 			 = -std=c99 $(OFLAG) -march=native -w
-MPICFLAGS        = -I$(MPI_HOME)/include $(MPI_GTL) $(GDR_FLAGS)
+MPICFLAGS        = -I$(MPI_HOME)/include $(MPI_GTL_FLAGS) $(GDR_FLAGS)
 GENCODE_FLAGS    = -gencode arch=compute_$(SMS),code=sm_$(SMS)
 
 CUDACFLAGS		 = -I$(CUDA_HOME)/include
-NVCCFLAGS= $(OFLAG) $(GENCODE_FLAGS) -Xcompiler -march=native -allow-unsupported-compiler
-CUDALDFLAGS=$(MPI_GTL) -L$(CUDA_HOME)/lib64 -lcudart $(OFLAG)
+NVCCFLAGS        = $(OFLAG) $(GENCODE_FLAGS)  
+NVCCFLAGS       += -Xcompiler -march=native -allow-unsupported-compiler
+CUDALDFLAGS      = $(MPI_GTL_FLAGS) $(OFLAG) $(CUDA_DRV_FLAGS) 
+CUDALDFLAGS     += -L$(CUDA_HOME)/lib64 -lcudart
 
 # Description of binaries
 BINDIR=../bin
@@ -64,8 +74,8 @@ BINARIES=$(JACOBI_CUDA_NORMAL_MPI) $(JACOBI_CUDA_AWARE_MPI)
 # Commands
 all: $(BINARIES)
 
-device.o: Jacobi.h Device.cu Makefile
-	$(NVCC) $(MPICFLAGS) $(NVCCFLAGS) -c Device.cu -o device.o
+device.o: Device.cu Jacobi.h Makefile
+	$(NVCC) $(MPICFLAGS) $(NVCCFLAGS) -c $< -o $@
 
 input.o: Jacobi.h Input.c Makefile
 	$(MPICC) $(MPICFLAGS) $(CUDACFLAGS) $(CFLAGS) -c Input.c -o input.o

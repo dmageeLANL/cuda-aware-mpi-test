@@ -5,16 +5,18 @@ Block Jacobi iteration code for CUDA+MPI, updated, adapted and generalized from 
 To run the jacobi test, be on a backend node, load an mpi compatible with slurm, enter the folder, and run the `runjac` script.
 This script does not require any arguments, but it does accept arguments for build configuration in the form of key value pairs where the key is a variable assigned with ? in `jacobi_test/src/Makefile` which are the build options.
 #### BUILD OPTIONS
+Set any of these variables to empty on command line to disable
 
 * MPICC		    - MPI C Compiler [cc]
 * MPILD		    - MPI Linker C++ compiler [CC]
 * NVCC		    - NVCC COMPILER [nvcc]
 * CCBIN   	    - CUDA HOST COMPILER (companion for nvcc) [$(MPICC)]
 * SMS     	    - Compute capability of target [80]
-* CUDA_HOME 	- Prefix for cuda install [$(CUDA_PATH)]
 * OFLAG     	- Optimization flag [-O3]
+* CUDA_HOME 	- Prefix for cuda install [$(CUDA_PATH)]
+* CUDA_COMPAT 	- Prefix for cuda install [-L$(CUDA_PATH)/compat] [links -lcuda]
 * GDR_FLAGS	    - GPU Direct library (SET GDR_FLAGS= to disable) [-lgdrapi]
-* MPI_GTL       - Gtl library for cuda aware (cray only) (SET MPI_GTL= to disable) [-L$(MPI_HOME)/../../../gtl/lib -lmpi_gtl_cuda]
+* MPI_GTL       - Gtl library for cuda aware (cray only) [$(CRAY_MPICH_BASEDIR)/../gtl/lib] [links -lmpi_gtl_cuda]
 
 #### RUNTIME OPTIONS
 
