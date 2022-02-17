@@ -70,37 +70,28 @@ BINDIR=../bin
 JACOBI_CUDA_NORMAL_MPI=$(BINDIR)/jacobi_cuda_normal_mpi
 JACOBI_CUDA_AWARE_MPI=$(BINDIR)/jacobi_cuda_aware_mpi
 BINARIES=$(JACOBI_CUDA_NORMAL_MPI) $(JACOBI_CUDA_AWARE_MPI)
+OBJS = Jacobi.o Input.o Host.o Device.o
 
 # Commands
+.PHONY: clean doc mkdr
 all: $(BINARIES)
 
-device.o: Device.cu Jacobi.h Makefile
+mkdr:
+	mkdir -p $(BINDIR)
+
+%.o: %.cu Jacobi.h Makefile
 	$(NVCC) $(MPICFLAGS) $(NVCCFLAGS) -c $< -o $@
 
-input.o: Jacobi.h Input.c Makefile
-	$(MPICC) $(MPICFLAGS) $(CUDACFLAGS) $(CFLAGS) -c Input.c -o input.o
+%.o: %.c Jacobi.h Makefile
+	$(MPICC) $(MPICFLAGS) $(CUDACFLAGS) $(CFLAGS) -c $< -o $@
 
-jacobi.o: Jacobi.h Jacobi.c Makefile
-	$(MPICC) $(MPICFLAGS) $(CUDACFLAGS) $(CFLAGS) -c Jacobi.c -o jacobi.o
-
-host.o: Jacobi.h Host.c Makefile
-	$(MPICC) $(MPICFLAGS) $(CFLAGS) $(CUDACFLAGS) -c Host.c -o host.o
-
-cuda_normal_mpi.o: Jacobi.h CUDA_Normal_MPI.c Makefile
-	$(MPICC) $(MPICFLAGS) $(CFLAGS) $(CUDACFLAGS) -c CUDA_Normal_MPI.c -o cuda_normal_mpi.o
-
-cuda_aware_mpi.o: Jacobi.h CUDA_Aware_MPI.c Makefile
-	$(MPICC) $(MPICFLAGS) $(CFLAGS) $(CUDACFLAGS) -c CUDA_Aware_MPI.c -o cuda_aware_mpi.o
-
-$(JACOBI_CUDA_NORMAL_MPI): jacobi.o input.o host.o device.o cuda_normal_mpi.o Makefile
-	mkdir -p $(BINDIR)
-	$(MPILD) -o $(JACOBI_CUDA_NORMAL_MPI) jacobi.o input.o host.o device.o  cuda_normal_mpi.o $(CUDALDFLAGS)
+$(JACOBI_CUDA_NORMAL_MPI): CUDA_Normal_MPI.o $(OBJS) | mkdr
+	$(MPILD) -o $@ $^ $(CUDALDFLAGS)
 	
-$(JACOBI_CUDA_AWARE_MPI): jacobi.o input.o host.o device.o cuda_aware_mpi.o Makefile
-	mkdir -p $(BINDIR)
-	$(MPILD) -o $(JACOBI_CUDA_AWARE_MPI) jacobi.o input.o host.o device.o cuda_aware_mpi.o $(CUDALDFLAGS)
+$(JACOBI_CUDA_AWARE_MPI): CUDA_Aware_MPI.o $(OBJS) | mkdr
+	$(MPILD) -o $@ $^ $(CUDALDFLAGS)
 
-doc: CUDA_Normal_MPI.c CUDA_Aware_MPI.c Device.cu Host.c Input.c Makefile Jacobi.c Jacobi.h Jacobi.doxygen
+doc: CUDA_Normal_MPI.c CUDA_Aware_MPI.c Device.cu Host.c Input.c Jacobi.c Jacobi.h Jacobi.doxygen
 	doxygen Jacobi.doxygen
 	
 clean:
