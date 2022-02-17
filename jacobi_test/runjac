@@ -29,7 +29,9 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 export MPILD=$CXX
 export MPICC=$CC
 export MPI_HOME=$mpif
+export CUDA_HOME=${CUDA_HOME:-$CUDA_PATH}
 MAKEIT=
+CUDA_COMPAT="${CUDA_HOME}/compat"
 
 ngpu=$(nvidia-smi -q | awk '/Attach/ {print $NF}')
 topx=4
@@ -52,6 +54,12 @@ cd src
 if [[ -n $MAKEIT ]]; then
 	make clean
 	make 
+fi
+
+if [[ -n $CUDA_COMPAT ]]; then
+    if [[ ! ("${LD_LIBRARY_PATH}" =~ "${CUDA_COMPAT}") ]]; then
+		export LD_LIBRARY_PATH="${CUDA_COMPAT}:${LD_LIBRARY_PATH}"
+    fi
 fi
 
 cd ../rslt
