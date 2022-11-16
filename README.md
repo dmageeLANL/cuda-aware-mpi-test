@@ -1,6 +1,6 @@
 ## JACOBI TEST
 
-Block Jacobi iteration code for CUDA+MPI, updated, adapted and generalized from https://github.com/NVIDIA-developer-blog/code-samples/tree/master/posts/cuda-aware-mpi-example
+Block Jacobi iteration code for CUDA+MPI, updated, adapted and generalized from https://github.com/NVIDIA-developer-blog/code-samples/tree/master/posts/cuda-aware-mpi-example.  This code is from a two part blog post, part 2 here: https://developer.nvidia.com/blog/benchmarking-cuda-aware-mpi/.
 
 To run the jacobi test, be on a backend node, load an mpi compatible with slurm, enter the folder, and run the `runjac` script.
 This script does not require any arguments, but it does accept arguments for build configuration in the form of key value pairs where the key is a variable assigned with ? in `jacobi_test/src/Makefile` which are the build options.
