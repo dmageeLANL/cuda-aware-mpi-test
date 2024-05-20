@@ -34,8 +34,8 @@ MAKEIT=
 CUDA_COMPAT="${CUDA_HOME}/compat"
 
 ngpu=$(nvidia-smi -q | awk '/Attach/ {print $NF}')
+topy=4
 topx=4
-topy=2
 srun_opts=
 
 ###############################################################
@@ -53,7 +53,7 @@ snn=$(( nprcs/ngpu ))
 cd src
 if [[ -n $MAKEIT ]]; then
 	make clean
-	make 
+	make
 fi
 
 if [[ -n $CUDA_COMPAT ]]; then

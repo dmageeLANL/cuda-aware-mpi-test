@@ -4,5 +4,14 @@ noderank=${OMPI_COMM_WORLD_LOCAL_RANK:-$SLURM_LOCALID}
 mpirank=${PMIX_RANK:-$SLURM_PROCID}
 nr=$(( $noderank+1 ))
 export CUDA_VISIBLE_DEVICES=$noderank
+nvp=0
+if [[ $1 == nvprof ]]; then
+	nvp=1
+	shift
+fi
 
-$@
+if [[ ($mpirank == 0) && ($nvp == 1) ]]; then
+	nsys nvprof $@
+else
+	$@
+fi
