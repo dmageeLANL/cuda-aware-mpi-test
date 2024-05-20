@@ -9,6 +9,10 @@ setvar () {
     done
 }
 
+separator() {
+    echo "######################################################"
+}
+
 ## FIND PREFIX FROM EXECUTABLE
 prefixer() {
     ppath=""
@@ -30,49 +34,63 @@ export MPILD=$CXX
 export MPICC=$CC
 export MPI_HOME=$mpif
 export CUDA_HOME=${CUDA_HOME:-$CUDA_PATH}
+export NNODES=$SLURM_NNODES
+export SRUN_OPTS=""
 MAKEIT=
 CUDA_COMPAT="${CUDA_HOME}/compat"
 
 ngpu=$(nvidia-smi -q | awk '/Attach/ {print $NF}')
 topy=4
 topx=4
-srun_opts=
 
 ###############################################################
 ## OVERRIDE THE DEFAULT ARGUMENTS WITH COMMAND LINE OPTIONS
 ###############################################################
 
 setvar $@
+srun_opts="-N ${NNODES} --ntasks-per-node=${ngpu} ${SRUN_OPTS}" #Add defaults here.
 
 ###############################################################
-## GET SRUN OPTIONS
+## GET TOPOLOGY
 ###############################################################
-nprcs=$(( topx*topy ))
-snn=$(( nprcs/ngpu ))
 
+: ${topx=:$ngpu}
+: ${topy=:NNODES}
+
+###############################################################
+## MAKE AND RUN
+###############################################################
 cd src
-if [[ -n $MAKEIT ]]; then
-	make clean
-	make
-fi
-
-if [[ -n $CUDA_COMPAT ]]; then
+if [[ -d $CUDA_COMPAT ]]; then
     if [[ ! ("${LD_LIBRARY_PATH}" =~ "${CUDA_COMPAT}") ]]; then
 		export LD_LIBRARY_PATH="${CUDA_COMPAT}:${LD_LIBRARY_PATH}"
-    fi
+    fiq
+    export CUDA_COMPAT
+fi
+
+if [[ -n $MAKEIT ]]; then
+    separator
+    echo "MAKING..."
+	make clean
+	make
+    echo ""
 fi
 
 cd ../rslt
 
+separator
 echo NORMAL $topx $topy $snn $nprcs
-echo "srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy"
-srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy
+separator
+echo "srun ${srun_opts} ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy"
+srun ${srun_opts} ./run_mpi ../bin/jacobi_cuda_normal_mpi -t $topx $topy
 
 if [[ -f core ]]; then mv core core_normal; echo CORE_NORMAL; fi
 
+separator
 echo AWARE
-echo "srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy"
-srun -N $snn --ntasks-per-node=${ngpu} ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy
+separator
+echo "srun ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy"
+srun ${srun_opts} ./run_mpi ../bin/jacobi_cuda_aware_mpi -t $topx $topy
 
 if [[ -f core ]]; then mv core core_aware; echo CORE_AWARE; fi
 

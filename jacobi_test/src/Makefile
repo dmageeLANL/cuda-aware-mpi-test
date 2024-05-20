@@ -28,7 +28,7 @@
 ## ARGUMENTS THAT CAN BE OVERRIDDEN AT COMMAND LINE
 ######################################################################
 
-# Compilers 
+# Compilers
 MPICC		?=cc
 MPILD		?=CC
 NVCC		?=nvcc
@@ -37,7 +37,7 @@ CCBIN   	?=$(MPICC)
 SMS     	?=80
 CUDA_HOME 	?= $(CUDA_PATH)
 OFLAG     	?= -O3
-GDR_FLAGS	?= -lgdrapi 
+GDR_FLAGS	?= -lgdrapi
 MPI_GTL     ?= $(CRAY_MPICH_BASEDIR)/../gtl/lib
 CUDA_COMPAT ?= $(CUDA_HOME)/compat
 
@@ -60,9 +60,9 @@ MPICFLAGS        = -I$(MPI_HOME)/include $(MPI_GTL_FLAGS) $(GDR_FLAGS)
 GENCODE_FLAGS    = -gencode arch=compute_$(SMS),code=sm_$(SMS)
 
 CUDACFLAGS		 = -I$(CUDA_HOME)/include
-NVCCFLAGS        = $(OFLAG) $(GENCODE_FLAGS)  
+NVCCFLAGS        = $(OFLAG) $(GENCODE_FLAGS)
 NVCCFLAGS       += -Xcompiler -march=native -allow-unsupported-compiler
-CUDALDFLAGS      = $(MPI_GTL_FLAGS) $(OFLAG) $(CUDA_DRV_FLAGS) 
+CUDALDFLAGS      = $(MPI_GTL_FLAGS) $(OFLAG) $(CUDA_DRV_FLAGS)
 CUDALDFLAGS     += -L$(CUDA_HOME)/lib64 -lcudart
 
 # Description of binaries
@@ -87,12 +87,12 @@ mkdr:
 
 $(JACOBI_CUDA_NORMAL_MPI): CUDA_Normal_MPI.o $(OBJS) | mkdr
 	$(MPILD) -o $@ $^ $(CUDALDFLAGS)
-	
+
 $(JACOBI_CUDA_AWARE_MPI): CUDA_Aware_MPI.o $(OBJS) | mkdr
 	$(MPILD) -o $@ $^ $(CUDALDFLAGS)
 
 doc: CUDA_Normal_MPI.c CUDA_Aware_MPI.c Device.cu Host.c Input.c Jacobi.c Jacobi.h Jacobi.doxygen
 	doxygen Jacobi.doxygen
-	
+
 clean:
 	rm -rf *.o *~ $(BINARIES)
